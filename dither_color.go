@@ -1,24 +1,25 @@
-package main
+package dither
 
 import (
+	"log"
+	"os"
 	"image"
+	"image/png"
+	_ "image/jpeg"
 	"image/color"
 )
 
-type ColorDitherer interface {
-	Algorithm(image.Image) (*image.RGBA, error)
+type Settings struct {
+	Filter [][]float32
+	ErrorMultiplier float32
 }
 
-type Settings struct {
-	filter [][]float32
-	errorMultiplier float32
-}
-type ColorDither struct {
+type Dither struct {
 	Type string
 	Settings
 }
 
-func (dither ColorDither) Algorithm(input image.Image) (*image.RGBA, error) {
+func (dither Dither) PrintColor(input image.Image) {
 	bounds := input.Bounds()
 	img := image.NewRGBA(bounds)
 	for x := bounds.Min.X; x < bounds.Dx(); x++ {
@@ -50,9 +51,9 @@ func (dither ColorDither) Algorithm(input image.Image) (*image.RGBA, error) {
 		for y := 0; y < dy; y++ {
 			r32,g32,b32,a := img.At(x, y).RGBA()
 			r, g, b := float32(uint8(r32)), float32(uint8(g32)), float32(uint8(b32))
-			r -= redErrors[x][y] * dither.errorMultiplier
-			g -= greenErrors[x][y] * dither.errorMultiplier
-			b -= blueErrors[x][y] * dither.errorMultiplier
+			r -= redErrors[x][y] * dither.ErrorMultiplier
+			g -= greenErrors[x][y] * dither.ErrorMultiplier
+			b -= blueErrors[x][y] * dither.ErrorMultiplier
 
 			if r < 128 {
 				qrr = -r
@@ -77,17 +78,29 @@ func (dither ColorDither) Algorithm(input image.Image) (*image.RGBA, error) {
 			}
 			img.Set(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
 
-			for xx := 0; xx < 3; xx++ {
-				for yy := -2; yy <= 2; yy++ {
+			ydim := len(dither.Filter) - 1
+			xdim := len(dither.Filter[0]) / 2
+
+			for xx := 0; xx < ydim + 1; xx++ {
+				for yy := -xdim; yy <= xdim - 1; yy++ {
 					if y + yy < 0 || dy <= y + yy || x + xx < 0 || dx <= x + xx {
 						continue
 					}
-					redErrors[x+xx][y+yy] 	+= qrr * dither.filter[xx][yy + 2]
-					greenErrors[x+xx][y+yy] += qrg * dither.filter[xx][yy + 2]
-					blueErrors[x+xx][y+yy] 	+= qrb * dither.filter[xx][yy + 2]
+					redErrors[x+xx][y+yy] 	+= qrr * dither.Filter[xx][yy + ydim]
+					greenErrors[x+xx][y+yy] += qrg * dither.Filter[xx][yy + ydim]
+					blueErrors[x+xx][y+yy] 	+= qrb * dither.Filter[xx][yy + ydim]
 				}
 			}
 		}
 	}
-	return img, nil
+	output, err := os.Create("output/color/" + dither.Type +".png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer output.Close()
+	err = png.Encode(output, img)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
