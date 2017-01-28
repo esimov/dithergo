@@ -48,7 +48,6 @@ func (dither Dither) PrintMono(input image.Image) {
 
 			ydim := len(dither.Filter) - 1
 			xdim := len(dither.Filter[0]) / 2
-
 			for xx := 0; xx < ydim + 1; xx++ {
 				for yy := -xdim; yy <= xdim - 1; yy++ {
 					if y + yy < 0 || dy <= y + yy || x + xx < 0 || dx <= x + xx {

@@ -95,7 +95,7 @@ func (file *file) TresholdDithering(input *image.Gray, createImageOutput bool) (
 }
 
 func progress(done chan struct{}) {
-	ticker := time.NewTicker(time.Millisecond * 100)
+	ticker := time.NewTicker(time.Millisecond * 200)
 
 	go func() {
 		for {
@@ -144,6 +144,50 @@ func main()  {
 				0.92,
 			},
 		},
+		dither.Dither{
+			"Burkes",
+			dither.Settings{
+				[][]float32{
+					[]float32{ 0.0, 0.0, 0.0, 8.0 / 32.0, 4.0 / 32.0 },
+					[]float32{ 2.0 / 32.0, 4.0 / 32.0, 8.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0 },
+					[]float32{ 0.0, 0.0, 0.0, 0.0, 0.0 },
+				},
+				0.92,
+			},
+		},
+		dither.Dither{
+			"Sierra-3",
+			dither.Settings{
+				[][]float32{
+					[]float32{ 0.0, 0.0, 0.0, 5.0 / 32.0, 3.0 / 32.0 },
+					[]float32{ 2.0 / 32.0, 4.0 / 32.0, 5.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0 },
+					[]float32{ 0.0, 2.0 / 32.0, 3.0 / 32.0, 2.0 / 32.0, 0.0 },
+				},
+				0.92,
+			},
+		},
+		dither.Dither{
+			"Sierra-2",
+			dither.Settings{
+				[][]float32{
+					[]float32{ 0.0, 0.0, 0.0, 4.0 / 16.0, 3.0 / 16.0 },
+					[]float32{ 1.0 / 16.0, 2.0 / 16.0, 3.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0 },
+					[]float32{ 0.0, 0.0, 0.0, 0.0, 0.0 },
+				},
+				0.92,
+			},
+		},
+		dither.Dither{
+			"Sierra-Lite",
+			dither.Settings{
+				[][]float32{
+					[]float32{ 0.0, 0.0, 2.0 / 4.0 },
+					[]float32{ 1.0 / 4.0, 1.0 / 4.0, 0.0 },
+					[]float32{ 0.0, 0.0, 0.0 },
+				},
+				0.92,
+			},
+		},
 	}
 
 	if len(os.Args) < 2 || (len(os.Args) > 1 && (os.Args[1] == "--help" || os.Args[1] == "-h")) {
@@ -156,7 +200,7 @@ func main()  {
 	input := &file{name: string(os.Args[1])}
 	img, _ := input.Open()
 	fmt.Print("Rendering image...")
-
+	now := time.Now()
 	progress(done)
 
 	func(input *file, done chan struct{}) {
@@ -171,6 +215,7 @@ func main()  {
 		}
 		done <-struct{}{}
 	}(input, done)
-
+	since := time.Since(now)
 	fmt.Println("\nDone✓")
+	fmt.Printf("Rendered in: %.2fs\n", since.Seconds())
 }
