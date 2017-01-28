@@ -25,6 +25,7 @@ var (
 	export		string
 	grayscale	bool
 	treshold	bool
+	multiplier	float64
 	commands 	flag.FlagSet
 )
 
@@ -119,6 +120,36 @@ func progress(done chan struct{}) {
 }
 
 func main()  {
+	commands = *flag.NewFlagSet("commands", flag.ExitOnError)
+	commands.StringVar(&outputDir, "outputdir", "output", "Directory name, where to save the generated images")
+	commands.StringVar(&export, "export", "all", "Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono'")
+	commands.BoolVar(&grayscale, "grayscale", true, "Convert image to grayscale")
+	commands.BoolVar(&treshold, "treshold", true, "Export treshold image")
+	commands.Float64Var(&multiplier, "multiplier", 1.18, "Error multiplier")
+
+	if len(os.Args) <= 1 {
+		fmt.Println("Please provide an image, or type --help for the supported command line arguments\n")
+		os.Exit(1)
+	}
+
+	if (os.Args[1] == "--help" || os.Args[1] == "-h") {
+		fmt.Println(`
+Usage of commands:
+  -export string
+    	Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono' (default "all")
+  -grayscale
+    	Convert image to grayscale (default true)
+  -multiplier float
+    	Error multiplier (default 1.18)
+  -outputdir string
+    	Directory name, where to save the generated images (default "output")
+  -treshold
+    	Export treshold image (default true)
+		`)
+		os.Exit(1)
+	}
+	commands.Parse(os.Args[2:])
+
 	// Dithering methods
 	ditherers = []dither.Dither{
 		dither.Dither{
@@ -129,7 +160,7 @@ func main()  {
 					[]float32{ 3.0 / 48.0, 5.0 / 48.0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0 },
 					[]float32{ 1.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0 },
 				},
-				0.92,
+				float32(multiplier),
 			},
 		},
 		dither.Dither{
@@ -140,7 +171,7 @@ func main()  {
 					[]float32{ 2.0 / 42.0, 4.0 / 42.0, 8.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0 },
 					[]float32{ 1.0 / 42.0, 2.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 1.0 / 42.0 },
 				},
-				0.92,
+				float32(multiplier),
 			},
 		},
 		dither.Dither{
@@ -151,7 +182,7 @@ func main()  {
 					[]float32{ 1.0 / 8.0, 1.0 / 8.0, 1.0 / 8.0, 0.0 },
 					[]float32{ 0.0, 1.0 / 8.0, 0.0, 0.0 },
 				},
-				0.92,
+				float32(multiplier),
 			},
 		},
 		dither.Dither{
@@ -162,7 +193,7 @@ func main()  {
 					[]float32{ 2.0 / 32.0, 4.0 / 32.0, 8.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0 },
 					[]float32{ 0.0, 0.0, 0.0, 0.0, 0.0 },
 				},
-				0.92,
+				float32(multiplier),
 			},
 		},
 		dither.Dither{
@@ -184,7 +215,7 @@ func main()  {
 					[]float32{ 1.0 / 16.0, 2.0 / 16.0, 3.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0 },
 					[]float32{ 0.0, 0.0, 0.0, 0.0, 0.0 },
 				},
-				0.92,
+				float32(multiplier),
 			},
 		},
 		dither.Dither{
@@ -195,38 +226,10 @@ func main()  {
 					[]float32{ 1.0 / 4.0, 1.0 / 4.0, 0.0 },
 					[]float32{ 0.0, 0.0, 0.0 },
 				},
-				0.92,
+				float32(multiplier),
 			},
 		},
 	}
-
-	commands = *flag.NewFlagSet("commands", flag.ExitOnError)
-	commands.StringVar(&outputDir, "outputdir", "output", "Directory name, where to save the generated images")
-	commands.StringVar(&export, "export", "all", "Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono'")
-	commands.BoolVar(&grayscale, "grayscale", true, "Convert image to grayscale")
-	commands.BoolVar(&treshold, "treshold", true, "Export treshold image")
-
-	if len(os.Args) <= 1 {
-		fmt.Println("Please provide an image, or type --help for the supported command line arguments\n")
-		os.Exit(1)
-	}
-
-	if (os.Args[1] == "--help" || os.Args[1] == "-h") {
-		fmt.Println(`
-Usage of commands:
-  -export string
-    	Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono' (default "all")
-  -grayscale
-    	Convert image to grayscale (default true)
-  -outputdir string
-    	Directory name, where to save the generated images (default "output")
-  -treshold
-    	Export treshold image (default true)
-		`)
-		os.Exit(1)
-	}
-
-	commands.Parse(os.Args[2:])
 
 	done := make(chan struct{})
 	input := &file{name: string(os.Args[1])}
