@@ -1,14 +1,15 @@
 package main
 
 import (
+	"os"
+	"flag"
+	"fmt"
+	"log"
+	"time"
 	"image"
 	"image/color"
 	"image/png"
 	_ "image/jpeg"
-	"os"
-	"fmt"
-	"log"
-	"time"
 	"github.com/esimov/dithergo"
 )
 
@@ -16,7 +17,16 @@ type file struct {
 	name string
 }
 
-var ditherers []dither.Dither
+var (
+	ditherers 	[]dither.Dither
+
+	// Command line flags
+	outputDir	string
+	export		string
+	grayscale	bool
+	treshold	bool
+	commands 	flag.FlagSet
+)
 
 func (file *file) Open() (image.Image, error) {
 	f, err := os.Open(file.name)
@@ -29,7 +39,8 @@ func (file *file) Open() (image.Image, error) {
 	return img, err
 }
 
-func (file *file) Grayscale(input image.Image, createImageOutput bool) (*image.Gray, error) {
+// Convert image to grayscale
+func (file *file) Grayscale(input image.Image, grayscale bool) (*image.Gray, error) {
 	bounds := input.Bounds()
 	gray := image.NewGray(bounds)
 
@@ -39,8 +50,7 @@ func (file *file) Grayscale(input image.Image, createImageOutput bool) (*image.G
 			gray.Set(x, y, pixel)
 		}
 	}
-
-	if createImageOutput {
+	if grayscale {
 		output, err := os.Create("output/grayscale.png")
 		if err != nil {
 			return nil, err
@@ -52,18 +62,20 @@ func (file *file) Grayscale(input image.Image, createImageOutput bool) (*image.G
 			log.Fatal(err)
 		}
 	}
-
 	return gray, nil
 }
 
-func (file *file) TresholdDithering(input *image.Gray, createImageOutput bool) (*image.Gray, error) {
+// Create treshold image
+func (file *file) TresholdDithering(input *image.Gray, treshold bool) (*image.Gray, error) {
 	var (
 		bounds = input.Bounds()
 		dithered = image.NewGray(bounds)
 		dx = bounds.Dx()
 		dy = bounds.Dy()
 	)
-
+	if !treshold {
+		return nil, nil
+	}
 	for x := 0; x < dx; x++ {
 		for y := 0; y < dy; y++ {
 			pixel := input.GrayAt(x, y)
@@ -77,23 +89,20 @@ func (file *file) TresholdDithering(input *image.Gray, createImageOutput bool) (
 			dithered.Set(x, y, threshold(pixel))
 		}
 	}
-
-	if createImageOutput {
-		output, err := os.Create("output/treshold.png")
-		if err != nil {
-			return nil, err
-		}
-		defer output.Close()
-		err = png.Encode(output, dithered)
-
-		if err != nil {
-			log.Fatal(err)
-		}
+	output, err := os.Create("output/treshold.png")
+	if err != nil {
+		return nil, err
 	}
+	defer output.Close()
+	err = png.Encode(output, dithered)
 
+	if err != nil {
+		log.Fatal(err)
+	}
 	return dithered, nil
 }
 
+// Function to visualize the rendering progress
 func progress(done chan struct{}) {
 	ticker := time.NewTicker(time.Millisecond * 200)
 
@@ -110,6 +119,7 @@ func progress(done chan struct{}) {
 }
 
 func main()  {
+	// Dithering methods
 	ditherers = []dither.Dither{
 		dither.Dither{
 			"FloydSteinberg",
@@ -134,7 +144,7 @@ func main()  {
 			},
 		},
 		dither.Dither{
-			"Athkinson",
+			"Atkinson",
 			dither.Settings{
 				[][]float32{
 					[]float32{ 0.0, 0.0, 1.0 / 8.0, 1.0 / 8.0 },
@@ -190,31 +200,65 @@ func main()  {
 		},
 	}
 
-	if len(os.Args) < 2 || (len(os.Args) > 1 && (os.Args[1] == "--help" || os.Args[1] == "-h")) {
-		fmt.Println("Usage :  Command --file name", os.Args)
+	commands = *flag.NewFlagSet("commands", flag.ExitOnError)
+	commands.StringVar(&outputDir, "outputdir", "output", "Directory name, where to save the generated images")
+	commands.StringVar(&export, "export", "all", "Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono'")
+	commands.BoolVar(&grayscale, "grayscale", true, "Convert image to grayscale")
+	commands.BoolVar(&treshold, "treshold", true, "Export treshold image")
+
+	if len(os.Args) <= 1 {
+		fmt.Println("Please provide an image, or type --help for the supported command line arguments\n")
 		os.Exit(1)
 	}
 
-	done := make(chan struct{})
+	if (os.Args[1] == "--help" || os.Args[1] == "-h") {
+		fmt.Println(`
+Usage of commands:
+  -export string
+    	Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono' (default "all")
+  -grayscale
+    	Convert image to grayscale (default true)
+  -outputdir string
+    	Directory name, where to save the generated images (default "output")
+  -treshold
+    	Export treshold image (default true)
+		`)
+		os.Exit(1)
+	}
 
+	commands.Parse(os.Args[2:])
+
+	done := make(chan struct{})
 	input := &file{name: string(os.Args[1])}
 	img, _ := input.Open()
+
 	fmt.Print("Rendering image...")
 	now := time.Now()
 	progress(done)
 
+	// Run dither methods
 	func(input *file, done chan struct{}) {
-		_ = os.Mkdir("output/color", os.ModePerm)
-		_ = os.Mkdir("output/mono", os.ModePerm)
-		gray, _ := input.Grayscale(img, true)
-		input.TresholdDithering(gray, true)
+		if commands.Parsed() {
+			_ = os.Mkdir(outputDir + "/color", os.ModePerm)
+			_ = os.Mkdir(outputDir + "/mono", os.ModePerm)
+			gray, _ := input.Grayscale(img, grayscale)
+			input.TresholdDithering(gray, treshold)
 
-		for _, ditherer := range ditherers {
-			ditherer.PrintColor(img)
-			ditherer.PrintMono(img)
+			for _, ditherer := range ditherers {
+				switch export {
+				case "all":
+					ditherer.PrintColor(img)
+					ditherer.PrintMono(img)
+				case "color":
+					ditherer.PrintColor(img)
+				case "mono":
+					ditherer.PrintMono(img)
+				}
+			}
+			done <- struct{}{}
 		}
-		done <-struct{}{}
 	}(input, done)
+
 	since := time.Since(now)
 	fmt.Println("\nDone✓")
 	fmt.Printf("Rendered in: %.2fs\n", since.Seconds())

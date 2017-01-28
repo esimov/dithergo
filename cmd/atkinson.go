@@ -56,12 +56,12 @@ func main()  {
 	// Dithering methods
 	ditherers = []dither.Dither{
 		dither.Dither{
-			"FloydSteinberg",
+			"Atkinson",
 			dither.Settings{
 				[][]float32{
-					[]float32{ 0.0, 0.0, 0.0, 7.0 / 48.0, 5.0 / 48.0 },
-					[]float32{ 3.0 / 48.0, 5.0 / 48.0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0 },
-					[]float32{ 1.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0 },
+					[]float32{ 0.0, 0.0, 1.0 / 8.0, 1.0 / 8.0 },
+					[]float32{ 1.0 / 8.0, 1.0 / 8.0, 1.0 / 8.0, 0.0 },
+					[]float32{ 0.0, 1.0 / 8.0, 0.0, 0.0 },
 				},
 				0.92,
 			},

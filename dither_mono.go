@@ -18,7 +18,6 @@ func (dither Dither) PrintMono(input image.Image) {
 			img.Set(x, y, pixel)
 		}
 	}
-
 	dx, dy := img.Bounds().Dx(), img.Bounds().Dy()
 
 	// Prepopulate multidimensional slice
@@ -36,6 +35,7 @@ func (dither Dither) PrintMono(input image.Image) {
 			pix -= errors[x][y] * dither.ErrorMultiplier
 
 			var quantError float32
+			// Diffuse the error of each calculation to the neighboring pixels
 			if pix < 128 {
 				quantError = -pix
 				pix = 0
@@ -46,6 +46,7 @@ func (dither Dither) PrintMono(input image.Image) {
 
 			img.SetGray(x, y, color.Gray{Y:uint8(pix)})
 
+			// Diffuse error in two dimension
 			ydim := len(dither.Filter) - 1
 			xdim := len(dither.Filter[0]) / 2
 			for xx := 0; xx < ydim + 1; xx++ {
@@ -53,6 +54,7 @@ func (dither Dither) PrintMono(input image.Image) {
 					if y + yy < 0 || dy <= y + yy || x + xx < 0 || dx <= x + xx {
 						continue
 					}
+					// Adds the error of the previous pixel to the current pixel
 					errors[x+xx][y+yy] += quantError * dither.Filter[xx][yy + ydim]
 				}
 			}

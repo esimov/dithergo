@@ -28,7 +28,6 @@ func (dither Dither) PrintColor(input image.Image) {
 			img.Set(x, y, pixel)
 		}
 	}
-
 	dx, dy := img.Bounds().Dx(), img.Bounds().Dy()
 
 	// Prepopulate multidimensional slices
@@ -55,6 +54,7 @@ func (dither Dither) PrintColor(input image.Image) {
 			g -= greenErrors[x][y] * dither.ErrorMultiplier
 			b -= blueErrors[x][y] * dither.ErrorMultiplier
 
+			// Diffuse the error of each calculation to the neighboring pixels
 			if r < 128 {
 				qrr = -r
 				r = 0
@@ -78,6 +78,7 @@ func (dither Dither) PrintColor(input image.Image) {
 			}
 			img.Set(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
 
+			// Diffuse error in two dimension
 			ydim := len(dither.Filter) - 1
 			xdim := len(dither.Filter[0]) / 2
 			for xx := 0; xx < ydim + 1; xx++ {
@@ -85,6 +86,7 @@ func (dither Dither) PrintColor(input image.Image) {
 					if y + yy < 0 || dy <= y + yy || x + xx < 0 || dx <= x + xx {
 						continue
 					}
+					// Adds the error of the previous pixel to the current pixel
 					redErrors[x+xx][y+yy] 	+= qrr * dither.Filter[xx][yy + ydim]
 					greenErrors[x+xx][y+yy] += qrg * dither.Filter[xx][yy + ydim]
 					blueErrors[x+xx][y+yy] 	+= qrb * dither.Filter[xx][yy + ydim]
