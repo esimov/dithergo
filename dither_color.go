@@ -48,7 +48,7 @@ func (dither Dither) PrintColor(input image.Image) {
 	var qrr, qrg, qrb float32
 	for x := 0; x < dx; x++ {
 		for y := 0; y < dy; y++ {
-			r32,g32,b32,a := img.At(x, y).RGBA()
+			r32, g32, b32, a := img.At(x, y).RGBA()
 			r, g, b := float32(uint8(r32)), float32(uint8(g32)), float32(uint8(b32))
 			r -= redErrors[x][y] * dither.ErrorMultiplier
 			g -= greenErrors[x][y] * dither.ErrorMultiplier
@@ -99,8 +99,8 @@ func (dither Dither) PrintColor(input image.Image) {
 		log.Fatal(err)
 	}
 	defer output.Close()
-	err = png.Encode(output, img)
 
+	err = png.Encode(output, img)
 	if err != nil {
 		log.Fatal(err)
 	}

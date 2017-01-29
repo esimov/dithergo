@@ -65,8 +65,8 @@ func (dither Dither) PrintMono(input image.Image) {
 		log.Fatal(err)
 	}
 	defer output.Close()
-	err = png.Encode(output, img)
 
+	err = png.Encode(output, img)
 	if err != nil {
 		log.Fatal(err)
 	}
