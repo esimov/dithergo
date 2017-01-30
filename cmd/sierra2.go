@@ -84,7 +84,7 @@ Usage of commands:
 	}
 	commands.Parse(os.Args[2:])
 
-	// Dithering methods
+	// Sierra-2 method
 	ditherers = []dither.Dither{
 		dither.Dither{
 			"Sierra-2",

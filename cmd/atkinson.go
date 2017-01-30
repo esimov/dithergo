@@ -84,7 +84,7 @@ Usage of commands:
 	}
 	commands.Parse(os.Args[2:])
 
-	// Dithering methods
+	// Atkinson method
 	ditherers = []dither.Dither{
 		dither.Dither{
 			"Atkinson",
