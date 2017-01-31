@@ -1,15 +1,11 @@
 package dither
 
 import (
-	"log"
-	"os"
 	"image"
-	"image/png"
-	_ "image/jpeg"
 	"image/color"
 )
 
-func (dither Dither) PrintMono(input image.Image) {
+func (dither Dither) Monochrome(input image.Image, errorMultiplier float32) image.Image {
 	bounds := input.Bounds()
 	img := image.NewGray(bounds)
 	for x := bounds.Min.X; x < bounds.Dx(); x++ {
@@ -32,7 +28,7 @@ func (dither Dither) PrintMono(input image.Image) {
 	for x := 0; x < dx; x++ {
 		for y := 0; y < dy; y++ {
 			pix := float32(img.GrayAt(x, y).Y)
-			pix -= errors[x][y] * dither.ErrorMultiplier
+			pix -= errors[x][y] * errorMultiplier
 
 			var quantError float32
 			// Diffuse the error of each calculation to the neighboring pixels
@@ -60,14 +56,5 @@ func (dither Dither) PrintMono(input image.Image) {
 			}
 		}
 	}
-	output, err := os.Create("output/mono/" + dither.Type +".png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close()
-
-	err = png.Encode(output, img)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return img
 }

@@ -1,17 +1,12 @@
 package dither
 
 import (
-	"log"
-	"os"
 	"image"
-	"image/png"
-	_ "image/jpeg"
 	"image/color"
 )
 
 type Settings struct {
 	Filter [][]float32
-	ErrorMultiplier float32
 }
 
 type Dither struct {
@@ -19,7 +14,7 @@ type Dither struct {
 	Settings
 }
 
-func (dither Dither) PrintColor(input image.Image) {
+func (dither Dither) Color(input image.Image, errorMultiplier float32) image.Image {
 	bounds := input.Bounds()
 	img := image.NewRGBA(bounds)
 	for x := bounds.Min.X; x < bounds.Dx(); x++ {
@@ -50,9 +45,9 @@ func (dither Dither) PrintColor(input image.Image) {
 		for y := 0; y < dy; y++ {
 			r32, g32, b32, a := img.At(x, y).RGBA()
 			r, g, b := float32(uint8(r32)), float32(uint8(g32)), float32(uint8(b32))
-			r -= redErrors[x][y] * dither.ErrorMultiplier
-			g -= greenErrors[x][y] * dither.ErrorMultiplier
-			b -= blueErrors[x][y] * dither.ErrorMultiplier
+			r -= redErrors[x][y] * errorMultiplier
+			g -= greenErrors[x][y] * errorMultiplier
+			b -= blueErrors[x][y] * errorMultiplier
 
 			// Diffuse the error of each calculation to the neighboring pixels
 			if r < 128 {
@@ -94,14 +89,5 @@ func (dither Dither) PrintColor(input image.Image) {
 			}
 		}
 	}
-	output, err := os.Create("output/color/" + dither.Type +".png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close()
-
-	err = png.Encode(output, img)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return img
 }
