@@ -1,4 +1,4 @@
-#dithergo
+# dithergo
 
 <strong>Dithergo</strong> is a simple Go library implementing various dithering algorithms to produce halftone images. It supports color and monochrome image outputs.
 
@@ -34,11 +34,11 @@ ditherers = []dither.Dither{
 
 You can plug in any dithering algorithm, so the library can be further extended.
 
-###Installation
+### Installation
 
 `go get -u github.com/esimov/dithergo`
 
-###Running
+### Running
 
 Type `go run cmd/main.go --help` to check all the supported commands. The library supports the following commands:
 
