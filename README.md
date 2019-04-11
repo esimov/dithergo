@@ -2,8 +2,6 @@
 
 <strong>Dithergo</strong> is a simple Go library implementing various dithering algorithms to produce halftone images. It supports color and monochrome image outputs.
 
-It's main purpose is mostly to explore the Go language as a medium for artistic exploration, but it can be used for more pragmatic purposes too, like to prepare a color image for output on non-color printer. 
-
 Currently the library includes the following dithering algorithms: <strong><i>Floyd Steinberg, Atkinson, Burkes, Stucki, Sierra-2, Sierra-3, Sierra-Lite</i></strong>. All of these algorithms have something in common: they diffuse the error in two dimensions, but they always push the error forward, never backward.
 
 We can represent this with the following diagram:
