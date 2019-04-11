@@ -81,4 +81,6 @@ Stucki | Stucki |
 
 ## License
 
+Copyright © 2018 Endre Simo
+
 This software is distributed under the MIT license found in the LICENSE file.
