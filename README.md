@@ -12,7 +12,7 @@ We can represent this with the following diagram:
 
            (1/48)
 
-where `X` represent the current pixel processed. The fraction at the bottom represents the divisor for the error. Above is the  the `Floyd-Steinberg` dithering algorithm, which is transposed in Go like this:
+where `X` represent the current pixel processed. The fraction at the bottom represents the divisor for the error. Above is the  the `Floyd-Steinberg` dithering algorithm transposable into the following Go code:
 
 ```go
 ditherers = []dither.Dither{
