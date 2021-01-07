@@ -40,18 +40,18 @@ func (dither Dither) Monochrome(input image.Image, errorMultiplier float32) imag
 				pix = 255
 			}
 
-			img.SetGray(x, y, color.Gray{Y:uint8(pix)})
+			img.SetGray(x, y, color.Gray{Y: uint8(pix)})
 
 			// Diffuse error in two dimension
 			ydim := len(dither.Filter) - 1
 			xdim := len(dither.Filter[0]) / 2
-			for xx := 0; xx < ydim + 1; xx++ {
-				for yy := -xdim; yy <= xdim - 1; yy++ {
-					if y + yy < 0 || dy <= y + yy || x + xx < 0 || dx <= x + xx {
+			for xx := 0; xx < ydim+1; xx++ {
+				for yy := -xdim; yy <= xdim-1; yy++ {
+					if y+yy < 0 || dy <= y+yy || x+xx < 0 || dx <= x+xx {
 						continue
 					}
 					// Adds the error of the previous pixel to the current pixel
-					errors[x+xx][y+yy] += quantError * dither.Filter[xx][yy + ydim]
+					errors[x+xx][y+yy] += quantError * dither.Filter[xx][yy+ydim]
 				}
 			}
 		}

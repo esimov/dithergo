@@ -26,17 +26,17 @@ func (dither Dither) Color(input image.Image, errorMultiplier float32) image.Ima
 	dx, dy := img.Bounds().Dx(), img.Bounds().Dy()
 
 	// Prepopulate multidimensional slices
-	redErrors   := make([][]float32, dx)
+	redErrors := make([][]float32, dx)
 	greenErrors := make([][]float32, dx)
-	blueErrors  := make([][]float32, dx)
+	blueErrors := make([][]float32, dx)
 	for x := 0; x < dx; x++ {
-		redErrors[x]	= make([]float32, dy)
-		greenErrors[x]	= make([]float32, dy)
-		blueErrors[x]	= make([]float32, dy)
+		redErrors[x] = make([]float32, dy)
+		greenErrors[x] = make([]float32, dy)
+		blueErrors[x] = make([]float32, dy)
 		for y := 0; y < dy; y++ {
-			redErrors[x][y]   = 0
+			redErrors[x][y] = 0
 			greenErrors[x][y] = 0
-			blueErrors[x][y]  = 0
+			blueErrors[x][y] = 0
 		}
 	}
 
@@ -76,15 +76,15 @@ func (dither Dither) Color(input image.Image, errorMultiplier float32) image.Ima
 			// Diffuse error in two dimension
 			ydim := len(dither.Filter) - 1
 			xdim := len(dither.Filter[0]) / 2
-			for xx := 0; xx < ydim + 1; xx++ {
-				for yy := -xdim; yy <= xdim - 1; yy++ {
-					if y + yy < 0 || dy <= y + yy || x + xx < 0 || dx <= x + xx {
+			for xx := 0; xx < ydim+1; xx++ {
+				for yy := -xdim; yy <= xdim-1; yy++ {
+					if y+yy < 0 || dy <= y+yy || x+xx < 0 || dx <= x+xx {
 						continue
 					}
 					// Adds the error of the previous pixel to the current pixel
-					redErrors[x+xx][y+yy] 	+= qrr * dither.Filter[xx][yy + ydim]
-					greenErrors[x+xx][y+yy] += qrg * dither.Filter[xx][yy + ydim]
-					blueErrors[x+xx][y+yy] 	+= qrb * dither.Filter[xx][yy + ydim]
+					redErrors[x+xx][y+yy] += qrr * dither.Filter[xx][yy+ydim]
+					greenErrors[x+xx][y+yy] += qrg * dither.Filter[xx][yy+ydim]
+					blueErrors[x+xx][y+yy] += qrb * dither.Filter[xx][yy+ydim]
 				}
 			}
 		}

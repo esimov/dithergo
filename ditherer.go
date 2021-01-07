@@ -1,16 +1,15 @@
 package dither
 
 import (
-	"os"
 	"flag"
 	"fmt"
-	"log"
-	"time"
 	"image"
-	"errors"
 	"image/color"
-	"image/png"
 	_ "image/jpeg"
+	"image/png"
+	"log"
+	"os"
+	"time"
 )
 
 type file struct {
@@ -19,30 +18,13 @@ type file struct {
 
 // Command line flags
 var (
-	outputDir	string
-	export		string
-	grayscale	bool
-	treshold	bool
-	multiplier	float64
-	commands 	flag.FlagSet
+	outputDir  string
+	export     string
+	grayscale  bool
+	treshold   bool
+	multiplier float64
+	cmd        flag.FlagSet
 )
-
-const helper = `
-Usage:
-go run <image>
-
-Options:
-  -export string
-    	Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono' (default "all")
-  -grayscale
-    	Convert image to grayscale (default true)
-  -multiplier float
-    	Error multiplier (default 1.18)
-  -outputdir string
-    	Directory name, where to save the generated images (default "output")
-  -treshold
-    	Export treshold image (default true)
-`
 
 // Open the input file
 func (file *file) Open() (image.Image, error) {
@@ -56,7 +38,7 @@ func (file *file) Open() (image.Image, error) {
 	return img, err
 }
 
-// Convert image to grayscale
+// Grayscale converts am image to grayscale mode
 func (file *file) Grayscale(input image.Image, grayscale bool) (*image.Gray, error) {
 	bounds := input.Bounds()
 	gray := image.NewGray(bounds)
@@ -67,46 +49,32 @@ func (file *file) Grayscale(input image.Image, grayscale bool) (*image.Gray, err
 			gray.Set(x, y, pixel)
 		}
 	}
-	if grayscale {
-		output, err := os.Create("output/grayscale.png")
-		if err != nil {
-			return nil, err
-		}
-		defer output.Close()
-		err = png.Encode(output, gray)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
 	return gray, nil
 }
 
-// Create treshold image
-func (file *file) TresholdDithering(input *image.Gray, treshold bool) (*image.Gray, error) {
+// tresholdDithering creates a tresholded image
+func (file *file) tresholdDithering(input *image.Gray) (*image.Gray, error) {
 	var (
-		bounds = input.Bounds()
+		bounds   = input.Bounds()
 		dithered = image.NewGray(bounds)
-		dx = bounds.Dx()
-		dy = bounds.Dy()
+		dx       = bounds.Dx()
+		dy       = bounds.Dy()
 	)
-	if !treshold {
-		return nil, nil
-	}
+
 	for x := 0; x < dx; x++ {
 		for y := 0; y < dy; y++ {
 			pixel := input.GrayAt(x, y)
-			threshold := func(pixel color.Gray)color.Gray {
+			threshold := func(pixel color.Gray) color.Gray {
 				if pixel.Y > 123 {
-					return color.Gray{Y:255}
+					return color.Gray{Y: 255}
 				}
-				return color.Gray{Y:0}
+				return color.Gray{Y: 0}
 			}
 
 			dithered.Set(x, y, threshold(pixel))
 		}
 	}
-	output, err := os.Create("output/treshold.png")
+	output, err := os.Create(outputDir + "/treshold.png")
 	if err != nil {
 		return nil, err
 	}
@@ -119,38 +87,36 @@ func (file *file) TresholdDithering(input *image.Gray, treshold bool) (*image.Gr
 	return dithered, nil
 }
 
-// Function to visualize the rendering progress
-func progress(done chan struct{}) {
-	ticker := time.NewTicker(time.Millisecond * 200)
+// Process parses the command line inputs and calls the defined dithering method
+func Process(ditherers []Dither) {
+	cmd = *flag.NewFlagSet("commands", flag.ExitOnError)
+	cmd.StringVar(&outputDir, "o", "", "Directory name, where to save the generated images")
+	cmd.StringVar(&export, "e", "all", "Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono'")
+	cmd.BoolVar(&treshold, "t", true, "Export treshold image")
+	cmd.Float64Var(&multiplier, "m", 1.18, "Error multiplier")
 
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				fmt.Print(".")
-			case <-done:
-				ticker.Stop()
-			}
-		}
-	}()
-}
+	cmd.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s <image>\n", os.Args[0])
+		cmd.PrintDefaults()
+	}
 
-// Parse the command line inputs and call the dithering methods
-func Process(ditherers []Dither)  {
-	commands = *flag.NewFlagSet("commands", flag.ExitOnError)
-	commands.StringVar(&outputDir, "outputdir", "output", "Directory name, where to save the generated images")
-	commands.StringVar(&export, "export", "all", "Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono'")
-	commands.BoolVar(&grayscale, "grayscale", true, "Convert image to grayscale")
-	commands.BoolVar(&treshold, "treshold", true, "Export treshold image")
-	commands.Float64Var(&multiplier, "multiplier", 1.18, "Error multiplier")
+	if len(os.Args) == 1 {
+		fmt.Fprintf(os.Stderr, "Usage: %s <image>\n", os.Args[0])
+		os.Exit(0)
+	}
 
-	if len(os.Args) <= 1 || (os.Args[1] == "--help" || os.Args[1] == "-h") {
-		fmt.Println(errors.New(helper))
-		os.Exit(1)
+	if os.Args[1] == "--help" || os.Args[1] == "-h" {
+		fmt.Fprintf(os.Stderr, "Usage: %s <image>\n", os.Args[0])
+		cmd.PrintDefaults()
+		os.Exit(0)
 	}
 
 	// Parse flags before to use them
-	commands.Parse(os.Args[2:])
+	cmd.Parse(os.Args[2:])
+
+	if len(outputDir) == 0 {
+		log.Fatal("Please specify an output directory!")
+	}
 
 	// Channel to signal the completion event
 	done := make(chan struct{})
@@ -161,20 +127,25 @@ func Process(ditherers []Dither)  {
 	now := time.Now()
 	progress(done)
 
-	// Run dither methods
+	// Run the ditherer method
 	func(input *file, done chan struct{}) {
-		if commands.Parsed() {
-			_ = os.Mkdir(outputDir + "/color", os.ModePerm)
-			_ = os.Mkdir(outputDir + "/mono", os.ModePerm)
+		if cmd.Parsed() {
+			if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+				os.Mkdir(outputDir, os.ModePerm)
+			}
+			_ = os.Mkdir(outputDir+"/color", os.ModePerm)
+			_ = os.Mkdir(outputDir+"/mono", os.ModePerm)
 
-			gray, _ := input.Grayscale(img, grayscale)
-			input.TresholdDithering(gray, treshold)
+			if treshold {
+				gray, _ := input.Grayscale(img, grayscale)
+				input.tresholdDithering(gray)
+			}
 
 			for _, ditherer := range ditherers {
 				outputColor := ditherer.Color(img, float32(multiplier))
-				outputMono  := ditherer.Monochrome(img, float32(multiplier))
+				outputMono := ditherer.Monochrome(img, float32(multiplier))
 				colorExport := outputDir + "/color/"
-				monoExport  := outputDir + "/mono/"
+				monoExport := outputDir + "/mono/"
 
 				switch export {
 				case "all":
@@ -197,7 +168,7 @@ func Process(ditherers []Dither)  {
 
 // Output the resulting image
 func generateOutput(dither Dither, img image.Image, exportDir string) {
-	output, err := os.Create(exportDir + dither.Type +".png")
+	output, err := os.Create(exportDir + dither.Type + ".png")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -207,4 +178,20 @@ func generateOutput(dither Dither, img image.Image, exportDir string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// progress visualize the rendering progress
+func progress(done chan struct{}) {
+	ticker := time.NewTicker(time.Millisecond * 200)
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Print(".")
+			case <-done:
+				ticker.Stop()
+			}
+		}
+	}()
 }
