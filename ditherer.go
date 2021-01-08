@@ -94,6 +94,9 @@ func Process(ditherers []Dither) {
 	cmd.BoolVar(&treshold, "t", true, "Option to export the tresholded image")
 	cmd.Float64Var(&multiplier, "em", 1.18, "Error multiplier")
 
+	log.SetPrefix("dithergo: ")
+	log.SetFlags(0)
+
 	cmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <image>\n", os.Args[0])
 		cmd.PrintDefaults()
@@ -114,11 +117,15 @@ func Process(ditherers []Dither) {
 	cmd.Parse(os.Args[2:])
 
 	if len(cmd.Args()) > 0 {
-		log.Fatal("Use an image file as the first argument!")
+		cmd.Usage()
+		log.Printf("missing input file.")
+		os.Exit(0)
 	}
 
 	if len(outputDir) == 0 {
-		log.Fatal("Please specify an output directory!")
+		cmd.Usage()
+		log.Printf("missing output directory.")
+		os.Exit(0)
 	}
 
 	input := &file{name: string(os.Args[1])}
