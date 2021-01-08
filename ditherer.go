@@ -19,14 +19,13 @@ type file struct {
 // Command line flags
 var (
 	outputDir  string
-	export     string
-	grayscale  bool
+	colorType  string
 	treshold   bool
 	multiplier float64
 	cmd        flag.FlagSet
 )
 
-// Open the input file
+// Open reads the source image
 func (file *file) Open() (image.Image, error) {
 	f, err := os.Open(file.name)
 	if err != nil {
@@ -38,8 +37,8 @@ func (file *file) Open() (image.Image, error) {
 	return img, err
 }
 
-// Grayscale converts am image to grayscale mode
-func (file *file) Grayscale(input image.Image, grayscale bool) (*image.Gray, error) {
+// Grayscale converts an image to grayscale mode
+func (file *file) Grayscale(input image.Image) (*image.Gray, error) {
 	bounds := input.Bounds()
 	gray := image.NewGray(bounds)
 
@@ -90,10 +89,10 @@ func (file *file) tresholdDithering(input *image.Gray) (*image.Gray, error) {
 // Process parses the command line inputs and calls the defined dithering method
 func Process(ditherers []Dither) {
 	cmd = *flag.NewFlagSet("commands", flag.ExitOnError)
-	cmd.StringVar(&outputDir, "o", "", "Directory name, where to save the generated images")
-	cmd.StringVar(&export, "e", "all", "Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono'")
-	cmd.BoolVar(&treshold, "t", true, "Export treshold image")
-	cmd.Float64Var(&multiplier, "m", 1.18, "Error multiplier")
+	cmd.StringVar(&outputDir, "o", "", "Output folder")
+	cmd.StringVar(&colorType, "e", "all", "Generates & exports the color and greyscale mode halftone images. Options: 'all', 'color', 'mono'")
+	cmd.BoolVar(&treshold, "t", true, "Option to export the tresholded image")
+	cmd.Float64Var(&multiplier, "em", 1.18, "Error multiplier")
 
 	cmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <image>\n", os.Args[0])
@@ -114,14 +113,22 @@ func Process(ditherers []Dither) {
 	// Parse flags before to use them
 	cmd.Parse(os.Args[2:])
 
+	if len(cmd.Args()) > 0 {
+		log.Fatal("Use an image file as the first argument!")
+	}
+
 	if len(outputDir) == 0 {
 		log.Fatal("Please specify an output directory!")
 	}
 
+	input := &file{name: string(os.Args[1])}
+	img, err := input.Open()
+	if err != nil {
+		log.Fatalf("Input error: %v", err)
+	}
+
 	// Channel to signal the completion event
 	done := make(chan struct{})
-	input := &file{name: string(os.Args[1])}
-	img, _ := input.Open()
 
 	fmt.Print("Rendering image...")
 	now := time.Now()
@@ -137,24 +144,24 @@ func Process(ditherers []Dither) {
 			_ = os.Mkdir(outputDir+"/mono", os.ModePerm)
 
 			if treshold {
-				gray, _ := input.Grayscale(img, grayscale)
+				gray, _ := input.Grayscale(img)
 				input.tresholdDithering(gray)
 			}
 
 			for _, ditherer := range ditherers {
-				outputColor := ditherer.Color(img, float32(multiplier))
-				outputMono := ditherer.Monochrome(img, float32(multiplier))
-				colorExport := outputDir + "/color/"
-				monoExport := outputDir + "/mono/"
+				dc := ditherer.Color(img, float32(multiplier))
+				dg := ditherer.Monochrome(img, float32(multiplier))
+				cex := outputDir + "/color/"
+				gex := outputDir + "/mono/"
 
-				switch export {
+				switch colorType {
 				case "all":
-					generateOutput(ditherer, outputColor, colorExport)
-					generateOutput(ditherer, outputMono, monoExport)
+					generateOutput(ditherer, dc, cex)
+					generateOutput(ditherer, dg, gex)
 				case "color":
-					generateOutput(ditherer, outputColor, colorExport)
+					generateOutput(ditherer, dc, cex)
 				case "mono":
-					generateOutput(ditherer, outputMono, monoExport)
+					generateOutput(ditherer, dg, gex)
 				}
 			}
 			done <- struct{}{}
@@ -166,7 +173,7 @@ func Process(ditherers []Dither) {
 	fmt.Printf("Rendered in: %.2fs\n", since.Seconds())
 }
 
-// Output the resulting image
+// generateOutput render the generated image
 func generateOutput(dither Dither, img image.Image, exportDir string) {
 	output, err := os.Create(exportDir + dither.Type + ".png")
 	if err != nil {
