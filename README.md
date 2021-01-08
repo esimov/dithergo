@@ -42,16 +42,15 @@ Type `go run cmd/main.go --help` to check all the supported commands. The librar
 
 ```
 Usage of commands:
-  -export string
-    	Generate the color and greyscale dithered images. Options: 'all', 'color', 'mono' (default "all")
-  -grayscale
-    	Convert image to grayscale (default true)
-  -multiplier float
+  -e string
+    	Generates & exports the color and greyscale mode halftone images. 
+	Options: 'all', 'color', 'mono' (default "all")
+  -em float
     	Error multiplier (default 1.18)
-  -outputdir string
-    	Directory name, where to save the generated images (default "output")
-  -treshold
-    	Export treshold image (default true)
+  -o string
+    	Output folder
+  -t	Option to export the tresholded image (default true)
+
 ```
 You can run all the dithering algorithms at once, or you can run a specific one from the `cmd` directory.  
 
