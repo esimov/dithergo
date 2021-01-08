@@ -20,7 +20,6 @@ type file struct {
 var (
 	outputDir  string
 	export     string
-	grayscale  bool
 	treshold   bool
 	multiplier float64
 	cmd        flag.FlagSet
@@ -39,7 +38,7 @@ func (file *file) Open() (image.Image, error) {
 }
 
 // Grayscale converts am image to grayscale mode
-func (file *file) Grayscale(input image.Image, grayscale bool) (*image.Gray, error) {
+func (file *file) Grayscale(input image.Image) (*image.Gray, error) {
 	bounds := input.Bounds()
 	gray := image.NewGray(bounds)
 
@@ -137,7 +136,7 @@ func Process(ditherers []Dither) {
 			_ = os.Mkdir(outputDir+"/mono", os.ModePerm)
 
 			if treshold {
-				gray, _ := input.Grayscale(img, grayscale)
+				gray, _ := input.Grayscale(img)
 				input.tresholdDithering(gray)
 			}
 
