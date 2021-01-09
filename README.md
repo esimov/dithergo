@@ -1,8 +1,8 @@
 # dithergo
 
-<strong>Dithergo</strong> is a simple Go library implementing various dithering algorithms to produce halftone images. It supports color and monochrome image outputs.
+<strong>Dithergo</strong> is a simple Go library implementing various dithering algorithm to produce halftone images. It supports color and monochrome image outputs.
 
-Currently the library includes the following dithering algorithms: <strong><i>Floyd Steinberg, Atkinson, Burkes, Stucki, Sierra-2, Sierra-3, Sierra-Lite</i></strong>. All of these algorithms have something in common: they diffuse the error in two dimensions, but they always push the error forward, never backward.
+The library supports the following dithering algorithms: ***Floyd Steinberg, Atkinson, Burkes, Stucki, Sierra-2, Sierra-3, Sierra-Lite***. All of these algorithms have something in common: they diffuse the error in two dimensions, but they always push the error forward, never backward.
 
 We can represent this with the following diagram:
 
@@ -12,7 +12,7 @@ We can represent this with the following diagram:
 
            (1/48)
 
-where `X` represent the current pixel processed. The fraction at the bottom represents the divisor for the error. Above is the  the `Floyd-Steinberg` dithering algorithm transposable into the following Go code:
+where `X` represent the current pixel processed. The fraction at the bottom represents the divisor for the error. Above is the  the `Floyd-Steinberg` dithering algorithm which can be transposed into the following Go code:
 
 ```go
 ditherers = []dither.Dither{
@@ -34,7 +34,7 @@ You can plug in any dithering algorithm, so the library can be further extended.
 
 ### Installation
 
-`go get -u github.com/esimov/dithergo`
+`$ go get -u -v github.com/esimov/dithergo`
 
 ### Running
 
@@ -52,9 +52,9 @@ Usage of commands:
   -t	Option to export the tresholded image (default true)
 
 ```
-You can run all the dithering algorithms at once, or you can run a specific one from the `cmd` directory.  
+You can run all of the supported dithering algorithms at once, or you can run a specific one from the `cmd` directory.  
 
-### Examples:
+### Results:
 |  Input  |
 |:--:|
 |<img src="https://raw.githubusercontent.com/esimov/dithergo/master/input/david.jpg" height="250">|
