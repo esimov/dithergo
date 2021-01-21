@@ -1,8 +1,8 @@
 # dithergo
 
-<strong>Dithergo</strong> is a simple Go library implementing various dithering algorithm to produce halftone images. It supports color and monochrome image outputs.
+<strong>Dithergo</strong> is a simple Go library implementing various [dithering](https://en.wikipedia.org/wiki/Dither) algorithm to produce halftone images. It supports color and monochrome image outputs.
 
-The library supports the following dithering algorithms: ***Floyd Steinberg, Atkinson, Burkes, Stucki, Sierra-2, Sierra-3, Sierra-Lite***. All of these algorithms have something in common: they diffuse the error in two dimensions, but they always push the error forward, never backward.
+The library implements the following dithering methods: ***Floyd Steinberg, Atkinson, Burkes, Stucki, Sierra-2, Sierra-3, Sierra-Lite***. All of these algorithms have something in common: they diffuse the error in two dimensions, but they always push the error forward, never backward.
 
 We can represent this with the following diagram:
 
@@ -77,6 +77,10 @@ Sierra-3 | Sierra-3 |
 Sierra-Lite | Sierra-Lite | 
 |<img src="https://raw.githubusercontent.com/esimov/dithergo/master/output/color/Stucki.png" height="250"> | <img src="https://raw.githubusercontent.com/esimov/dithergo/master/output/mono/Stucki.png" height="250"> |
 Stucki | Stucki | 
+
+## Author
+
+* Endre Simo ([@simo_endre](https://twitter.com/simo_endre))
 
 ## License
 
