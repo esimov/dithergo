@@ -1,6 +1,5 @@
 # dithergo
 [![CI](https://github.com/esimov/dithergo/workflows/CI/badge.svg)](https://github.com/esimov/dithergo/actions)
-[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go)](https://pkg.go.dev/github.com/esimov/dithergo)
 [![Go Reference](https://pkg.go.dev/badge/github.com/esimov/dithergo.svg)](https://pkg.go.dev/github.com/esimov/dithergo)
 [![license](https://img.shields.io/github/license/esimov/dithergo)](./LICENSE)
 
